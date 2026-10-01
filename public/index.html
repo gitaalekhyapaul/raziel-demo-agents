@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'">
+    <meta name="color-scheme" content="light">
+    <title>Raziel | Agent Console</title>
+    <link rel="stylesheet" href="/style.css">
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">R</span><span>Raziel</span></div>
+      <span class="badge synthetic">SYNTHETIC</span>
+      <div class="header-session" id="header-session" hidden>
+        <span id="connection-status" class="status">Not configured</span>
+        <button id="sync-button" type="button" class="icon-button" title="Refresh dashboard" aria-label="Refresh dashboard">&#8635;</button>
+        <button id="logout-button" type="button" class="subtle">Sign out</button>
+      </div>
+    </header>
+
+    <div id="notice" class="notice" role="alert" hidden></div>
+    <noscript><p class="notice">JavaScript unavailable.</p></noscript>
+
+    <main id="login-view" class="login-view">
+      <div class="eyebrow">Agent console</div>
+      <h1>Sign in</h1>
+      <form id="login-form">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" maxlength="1024" required>
+        <button id="login-button" type="submit" class="primary">Sign in</button>
+      </form>
+      <button id="session-retry" type="button" class="subtle" hidden>Retry connection</button>
+    </main>
+
+    <main id="console-view" class="console-view" hidden>
+      <div class="page-heading">
+        <div><div class="eyebrow">Payment reconciliation</div><h1 id="agent-label">Agent console</h1></div>
+        <div class="heading-meta"><span id="agent-role" class="badge">Agent</span><span id="sync-status" role="status">Loading</span></div>
+      </div>
+      <div class="tabs" role="tablist" aria-label="Agent views">
+        <button id="tasks-tab" type="button" role="tab" aria-selected="true" aria-controls="tasks-panel" tabindex="0">Tasks</button>
+        <button id="identity-tab" type="button" role="tab" aria-selected="false" aria-controls="identity-panel" tabindex="-1">Identity</button>
+      </div>
+
+      <section id="tasks-panel" role="tabpanel" aria-labelledby="tasks-tab">
+        <div class="section-toolbar"><h2>Tasks <span id="task-count" class="count">0</span></h2><button id="new-task-button" type="button" class="primary" aria-expanded="false" aria-controls="new-task-section">New task</button></div>
+        <section id="new-task-section" class="create-section" aria-labelledby="new-task-heading" hidden>
+          <h3 id="new-task-heading">New task</h3>
+          <form id="task-form" class="form-grid">
+            <div class="field wide"><label for="task-label">Task label</label><input id="task-label" name="label" maxlength="160" value="Reconciliation" required></div>
+            <div class="field"><label for="dataset-id">Dataset</label><input id="dataset-id" name="datasetId" maxlength="160" value="processor-demo-v1" required></div>
+            <div class="field"><label for="dataset-revision">Revision</label><input id="dataset-revision" name="datasetRevision" type="number" min="1" max="2147483647" step="1" value="1" required></div>
+            <div class="field wide"><label for="from-occurred-at">From (UTC)</label><input id="from-occurred-at" name="fromOccurredAt" type="datetime-local" step="1" value="2026-10-01T00:00:00" required></div>
+            <div class="field wide"><label for="to-occurred-at">To (UTC)</label><input id="to-occurred-at" name="toOccurredAt" type="datetime-local" step="1" value="2026-10-01T23:59:59" required></div>
+            <div id="incoming-fields" class="incoming-fields" hidden>
+              <div class="field"><label for="incoming-task">Incoming task</label><select id="incoming-task"><option value="">Select task</option></select></div>
+              <div class="field"><label for="incoming-message">Lookup message</label><select id="incoming-message"><option value="">Select message</option></select></div>
+              <p id="incoming-reference" class="muted"></p>
+            </div>
+            <div class="form-actions"><button id="create-task-button" type="submit" class="primary">Request access</button><button id="close-task-form" type="button" class="subtle">Close</button></div>
+          </form>
+        </section>
+
+        <p id="channel-error" class="inline-error" role="status" hidden>Message channel unavailable.</p>
+        <div class="task-workspace">
+          <aside class="task-sidebar" aria-label="Task list"><div id="task-list" class="task-list"></div><p id="no-tasks" class="empty">No tasks</p></aside>
+          <section class="task-detail" aria-label="Selected task">
+            <p id="no-selection" class="empty detail-empty">Select a task</p>
+            <div id="selected-task" hidden>
+              <div class="detail-heading"><div><div id="detail-dataset" class="eyebrow"></div><h2 id="detail-label"></h2></div><span id="detail-phase" class="badge"></span></div>
+              <dl id="task-meta" class="metadata"></dl>
+              <p id="task-error" class="inline-error" role="status" hidden></p>
+              <div class="command-bar" aria-label="Task commands">
+                <button type="button" data-command="refresh">Refresh request</button>
+                <button type="button" data-command="resume" class="primary">Resume</button>
+                <button type="button" data-command="pause">Pause</button>
+                <button type="button" data-command="cancel" class="danger-button">Cancel task</button>
+                <button type="button" data-command="retry">Retry</button>
+                <button type="button" data-command="run-agent">Run agent</button>
+              </div>
+
+              <section class="detail-section" aria-labelledby="claims-heading"><div class="section-heading"><h3 id="claims-heading">Capability public claims</h3><span id="capability-status" class="badge neutral">Not issued</span></div><dl id="capability-claims" class="metadata"></dl></section>
+              <section class="detail-section" aria-labelledby="rows-heading">
+                <div class="section-heading"><h3 id="rows-heading">Authorized rows <span id="row-count" class="count">0</span></h3><button type="button" data-command="query" class="primary">Query dataset</button></div>
+                <div class="inline-form query-range"><div class="field"><label for="query-from">From (UTC)</label><input id="query-from" type="datetime-local" step="1" required></div><div class="field"><label for="query-to">To (UTC)</label><input id="query-to" type="datetime-local" step="1" required></div></div>
+                <div class="receipt-line"><span id="verification-path" class="badge neutral">Not queried</span><span class="muted">Receipt</span><code id="receipt-id">-</code></div>
+                <div class="table-scroll"><table><caption class="sr-only">Authorized synthetic transactions</caption><thead><tr><th>Transaction</th><th>Occurred (UTC)</th><th>Amount (minor)</th><th>Currency</th><th>Merchant reference</th><th>Account reference</th><th>Type</th><th>Status</th></tr></thead><tbody id="query-rows"></tbody></table></div>
+                <p id="rows-empty" class="empty">No query result</p><p id="rows-limit" class="muted" hidden></p>
+              </section>
+
+              <section id="lookup-section" class="detail-section" aria-labelledby="lookup-heading"><h3 id="lookup-heading">Settlement lookup</h3><form id="lookup-form" class="inline-form"><div class="field"><label for="transaction-reference">Transaction reference</label><input id="transaction-reference" maxlength="160" required></div><button id="lookup-button" type="submit">Send lookup</button></form></section>
+              <section id="evidence-section" class="detail-section" aria-labelledby="evidence-heading" hidden><h3 id="evidence-heading">Settlement evidence</h3><form id="evidence-form" class="inline-form"><div class="field"><label for="evidence-message">Lookup message</label><select id="evidence-message"><option value="">Current lookup</option></select></div><button id="evidence-button" type="submit">Send evidence</button></form></section>
+
+              <section class="detail-section" aria-labelledby="messages-heading"><div class="section-heading"><h3 id="messages-heading">Messages <span id="message-count" class="count">0</span></h3><button type="button" data-command="messages">Refresh messages</button></div><ol id="message-list" class="message-list"></ol><p id="messages-empty" class="empty">No messages</p><p id="messages-limit" class="muted" hidden></p></section>
+              <section class="detail-section" aria-labelledby="result-heading"><h3 id="result-heading">Reconciliation result</h3><dl id="result-fields" class="metadata"></dl><p id="result-empty" class="empty">No result</p></section>
+              <section id="summary-section" class="detail-section" aria-labelledby="summary-heading" hidden><div class="section-heading"><h3 id="summary-heading">LLM summary</h3><span class="badge neutral">Task output</span></div><p id="task-summary" class="summary"></p></section>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section id="identity-panel" role="tabpanel" aria-labelledby="identity-tab" hidden>
+        <section class="identity-section" aria-labelledby="identity-heading"><div class="section-heading"><h2 id="identity-heading">Identity</h2><button id="copy-key-button" type="button">Copy public key</button></div><dl class="identity-values"><dt>Public key</dt><dd><code id="public-key">-</code></dd><dt>Key thumbprint</dt><dd><code id="key-thumbprint">-</code></dd><dt>Agent ID</dt><dd><code id="registered-agent-id">-</code></dd></dl><p id="copy-status" role="status" class="muted"></p></section>
+        <section class="identity-section" aria-labelledby="connection-heading"><div class="section-heading"><h2 id="connection-heading">Connection</h2><span id="connection-badge" class="badge neutral">Not configured</span></div><form id="connection-form" class="settings-form"><div class="field"><label for="base-url">API base URL</label><input id="base-url" name="baseUrl" type="url" maxlength="2048" placeholder="https://" autocomplete="url" required></div><div class="field"><label for="audience">Audience</label><input id="audience" name="audience" maxlength="256" required></div><div class="field"><label for="api-token">API token</label><input id="api-token" name="token" type="password" autocomplete="off" maxlength="4096" required></div><div><button id="connect-button" type="submit" class="primary">Save connection</button></div></form></section>
+        <section class="identity-section" aria-labelledby="llm-heading"><h2 id="llm-heading">LLM</h2><dl id="llm-meta" class="metadata"></dl></section>
+      </section>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,85 @@
+name: raziel-demo-agents
+x-runtime: &runtime
+  image: raziel-demo-agents:b0067
+  pull_policy: never
+  init: true
+  user: ${AGENT_UID:-1000}:${AGENT_GID:-1000}
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  tmpfs: ["/tmp:rw,nosuid,nodev,size=67108864,mode=1777"]
+  restart: unless-stopped
+services:
+  agent-a:
+    <<: *runtime
+    build:
+      context: .
+      args:
+        AGENT_UID: ${AGENT_UID:-1000}
+        AGENT_GID: ${AGENT_GID:-1000}
+    environment:
+      AGENT_ROLE: A
+      PORT: "3001"
+      AGENT_STATE_DIR: /var/lib/raziel-agent
+      AGENT_DASHBOARD_PASSWORD: ${AGENT_DASHBOARD_PASSWORD:?Set a private dashboard password}
+      AGENT_DASHBOARD_ORIGINS: ${AGENT_A_ORIGINS:-http://127.0.0.1:3001,http://localhost:3001}
+      CHANNEL_BASE_URL: http://channel:3003
+      CHANNEL_TOKEN: ${CHANNEL_TOKEN_A:?Set Agent A channel token}
+    env_file:
+      - path: ${SOCLAAS_ENV_PATH:-./.env.llm}
+        required: false
+    ports: ["${AGENT_BIND_HOST:-127.0.0.1}:${AGENT_A_PORT:-3001}:3001"]
+    volumes: [agent-a-state:/var/lib/raziel-agent]
+    networks: [channel-internal, agent-egress]
+    depends_on:
+      channel: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3001/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  agent-b:
+    <<: *runtime
+    environment:
+      AGENT_ROLE: B
+      PORT: "3002"
+      AGENT_STATE_DIR: /var/lib/raziel-agent
+      AGENT_DASHBOARD_PASSWORD: ${AGENT_DASHBOARD_PASSWORD:?Set a private dashboard password}
+      AGENT_DASHBOARD_ORIGINS: ${AGENT_B_ORIGINS:-http://127.0.0.1:3002,http://localhost:3002}
+      CHANNEL_BASE_URL: http://channel:3003
+      CHANNEL_TOKEN: ${CHANNEL_TOKEN_B:?Set Agent B channel token}
+    env_file:
+      - path: ${SOCLAAS_ENV_PATH:-./.env.llm}
+        required: false
+    ports: ["${AGENT_BIND_HOST:-127.0.0.1}:${AGENT_B_PORT:-3002}:3002"]
+    volumes: [agent-b-state:/var/lib/raziel-agent]
+    networks: [channel-internal, agent-egress]
+    depends_on:
+      channel: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3002/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  channel:
+    <<: *runtime
+    command: [node, src/channel.ts]
+    environment:
+      PORT: "3003"
+      CHANNEL_STATE_DIR: /var/lib/raziel-agent
+      CHANNEL_TOKEN_A: ${CHANNEL_TOKEN_A:?Set Agent A channel token}
+      CHANNEL_TOKEN_B: ${CHANNEL_TOKEN_B:?Set Agent B channel token}
+    volumes: [channel-state:/var/lib/raziel-agent]
+    networks: [channel-internal]
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3003/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+volumes:
+  agent-a-state:
+  agent-b-state:
+  channel-state:
+networks:
+  channel-internal: {internal: true}
+  agent-egress:

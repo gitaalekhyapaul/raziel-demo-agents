@@ -1,0 +1,28 @@
+{
+	"name": "raziel-demo-agents",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"license": "MIT",
+	"engines": {
+		"node": "24.18.0"
+	},
+	"packageManager": "pnpm@11.14.0",
+	"scripts": {
+		"start": "node src/server.ts",
+		"channel": "node src/channel.ts",
+		"test": "node --test test/*.test.ts",
+		"typecheck": "tsc --noEmit",
+		"format": "biome format --write src public test package.json tsconfig.json",
+		"format:check": "biome format src public test package.json tsconfig.json"
+	},
+	"dependencies": {
+		"@gitaalekhyapaul/raziel-sdk-ts": "file:vendor/gitaalekhyapaul-raziel-sdk-ts-0.1.0-b0066.tgz",
+		"@bufbuild/protobuf": "2.12.1"
+	},
+	"devDependencies": {
+		"@types/node": "24.13.3",
+		"typescript": "6.0.3",
+		"@biomejs/biome": "2.5.4"
+	}
+}
