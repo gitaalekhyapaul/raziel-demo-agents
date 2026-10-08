@@ -25,6 +25,7 @@ export function configuration() {
 			process.env.AGENT_STATE_DIR ?? `.state/agent-${role.toLowerCase()}`,
 		),
 		password: process.env.AGENT_DASHBOARD_PASSWORD ?? "",
+		defaultBaseUrl: process.env.RAZIEL_API_BASE_URL ?? "",
 		origins: (
 			process.env.AGENT_DASHBOARD_ORIGINS ??
 			`http://127.0.0.1:${port},http://localhost:${port}`

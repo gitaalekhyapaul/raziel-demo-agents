@@ -40,6 +40,7 @@ export class AgentRuntime {
 	readonly access: AccessTasks;
 	readonly channel?: ChannelClient;
 	readonly llm?: LlmConfig;
+	readonly defaultBaseUrl: string;
 	readonly busy = new Set<string>();
 	readonly clientFactory: (credentials: Credentials) => RazielClient;
 	constructor(options: {
@@ -48,12 +49,14 @@ export class AgentRuntime {
 		root: string;
 		channel?: ChannelClient;
 		llm?: LlmConfig;
+		defaultBaseUrl?: string;
 		clientFactory?: (credentials: Credentials) => RazielClient;
 	}) {
 		this.role = options.role;
 		this.signer = options.signer;
 		this.channel = options.channel;
 		this.llm = options.llm;
+		this.defaultBaseUrl = options.defaultBaseUrl ?? "";
 		this.access = new AccessTasks(
 			new JsonStore<AgentState>(options.root, "state.json", () => ({
 				version: 1,
@@ -423,7 +426,7 @@ export class AgentRuntime {
 						audience: credentials.audience,
 						agentId: credentials.agentId,
 					}
-				: { configured: false, baseUrl: "", audience: "" },
+				: { configured: false, baseUrl: this.defaultBaseUrl, audience: "" },
 			llm: { configured: Boolean(this.llm), model: this.llm?.model ?? "" },
 			tasks,
 			inbox,

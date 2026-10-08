@@ -78,10 +78,24 @@ for the container demo, such as the installation's existing HTTPS tunnel. SSH br
 forwarding alone does not create that container API endpoint. Do not weaken the SDK
 transport checks or join agents to backend owner networks to bypass this boundary.
 
-Ngrok's free assigned HTTPS domain is sufficient. The backend's
-`docs/runbooks/M7-AGENT-DEMO.md` includes a Mac ngrok option using SSH-forwarded port
-`13000`, plus dashboards at `13001` and `13002`. This needs no VM ngrok installation.
-Keep the Mac, SSH connection, and ngrok process running for that API route.
+The backend runs its ngrok tunnel inside Docker Compose on the active backend host.
+Set `RAZIEL_API_BASE_URL` in `.env.agents` to the same fixed HTTPS origin as the
+backend's `RAZIEL_NGROK_URL`. Both agents receive that default, and their Identity
+forms prefill it before the first connection. Save each agent's separate token and
+exact registration audience through that form. A retained connection overrides the
+startup default. No automatic connection, token migration, or identity change occurs.
+
+The backend's `docs/runbooks/M7-AGENT-DEMO.md` documents VM startup with
+`./scripts/start-m6-demo --ngrok` and Mac-only tunnel startup with `./scripts/start-ngrok`.
+No host ngrok process or agent tunnel is needed. Keep only one backend tunnel active
+for that fixed domain. Stop the VM tunnel before using the domain for a Mac backend.
+Changing hosts does not transfer backend registrations, tasks, or capability state.
+The public tunnel permits agent and protected-query APIs, not operator pages.
+Dashboard access stays local or SSH-forwarded at `13000`, `13001`, and `13002`.
+
+This development route passes agent API traffic through ngrok's cloud service.
+Use synthetic demo records, not private production data. Local request inspection
+is disabled. That setting is not a guarantee about provider-side access or retention.
 
 ## Desktop Flow
 
