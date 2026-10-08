@@ -15,8 +15,11 @@ and three-dashboard recording are not yet validated. There is no mock-proof swit
 Compatibility: backend `c5efbfb`, SDK runtime base `e7f1cd6`, public npm package
 `@gitaalekhyapaul/raziel-sdk-ts@0.1.0`. The manifest pins the exact release and the
 lockfile pins its registry integrity. Docker installs it from the public registry.
-No npm token or login is needed to install. The earlier tarball is retained only
-as [historical vendor provenance](vendor/README.md), not a build dependency.
+No npm token or login is needed to install. Both local development and VM builds
+use this same exact dependency. pnpm reuses its local package store and downloads
+missing content from npm. The earlier candidate archive is removed from this
+checkout. Its checksum and source commit remain in Git history and the backend
+release evidence.
 The pnpm workspace setting exempts only this verified, freshly published `0.1.0`
 from the package-age check. It does not disable that check for other packages.
 Node `24.18.0` and pnpm `11.14.0` match the backend toolchain.
@@ -138,6 +141,17 @@ pnpm typecheck
 pnpm test
 pnpm format:check
 ```
+
+With the required packages already in the local pnpm store, installation can run
+without registry access:
+
+```bash
+pnpm install --frozen-lockfile --offline
+```
+
+An empty or incomplete cache requires the normal install command above. Do not
+use a cache-directory path as a package dependency or switch manifests between
+local development and the VM.
 
 Run checks with the backend's pinned Docker toolchain. The package adds no LLM SDK or
 agent framework. Native Node HTTP, fetch, crypto, and TypeScript support serve the app.
