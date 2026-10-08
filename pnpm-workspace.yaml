@@ -1,0 +1,2 @@
+minimumReleaseAgeExclude:
+  - '@gitaalekhyapaul/raziel-sdk-ts@0.1.0'

@@ -17,7 +17,7 @@
 		"format:check": "biome format src public test package.json tsconfig.json"
 	},
 	"dependencies": {
-		"@gitaalekhyapaul/raziel-sdk-ts": "file:vendor/gitaalekhyapaul-raziel-sdk-ts-0.1.0-b0066.tgz",
+		"@gitaalekhyapaul/raziel-sdk-ts": "0.1.0",
 		"@bufbuild/protobuf": "2.12.1"
 	},
 	"devDependencies": {

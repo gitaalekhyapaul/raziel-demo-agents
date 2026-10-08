@@ -2,8 +2,7 @@ FROM raziel-toolchain:m0
 ARG AGENT_UID=1000
 ARG AGENT_GID=1000
 WORKDIR /app
-COPY package.json pnpm-lock.yaml ./
-COPY vendor ./vendor
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile --prod
 COPY src ./src
 COPY public ./public

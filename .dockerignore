@@ -5,5 +5,7 @@
 .env.*
 *.env
 node_modules
+.pnpm-store
+vendor
 test
 *.log

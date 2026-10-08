@@ -12,8 +12,13 @@ channel, bounded OpenAI-compatible tools, and desktop dashboards. Focused checks
 the real SDK signing code with controlled request responses. The connected VM proof
 and three-dashboard recording are not yet validated. There is no mock-proof switch.
 
-Compatibility: backend `c5efbfb`, SDK `e7f1cd6`, candidate package `0.1.0`.
-See [vendor provenance](vendor/README.md). Public npm publication is deferred.
+Compatibility: backend `c5efbfb`, SDK runtime base `e7f1cd6`, public npm package
+`@gitaalekhyapaul/raziel-sdk-ts@0.1.0`. The manifest pins the exact release and the
+lockfile pins its registry integrity. Docker installs it from the public registry.
+No npm token or login is needed to install. The earlier tarball is retained only
+as [historical vendor provenance](vendor/README.md), not a build dependency.
+The pnpm workspace setting exempts only this verified, freshly published `0.1.0`
+from the package-age check. It does not disable that check for other packages.
 Node `24.18.0` and pnpm `11.14.0` match the backend toolchain.
 
 ## Container Startup
@@ -109,6 +114,23 @@ or absence. Narrow the range before sending evidence. A receipt records access, 
 cryptographic proof of business reconciliation correctness.
 
 ## Checks And State
+
+### SDK Release Updates
+
+SDK changes are made and validated in the sibling `raziel-sdk-ts` repository.
+Publish a new version, then update this repository's exact dependency and lockfile:
+
+```bash
+pnpm add --save-exact @gitaalekhyapaul/raziel-sdk-ts@<released-version>
+pnpm typecheck
+pnpm test
+```
+
+Commit the agent dependency update after these checks. VM pulls use that committed
+version, then rebuild the agent image. Frozen installs never follow `latest` or
+silently update a running agent. An unchanged SDK release needs no new publication.
+
+### Local Checks
 
 ```bash
 pnpm install --frozen-lockfile
