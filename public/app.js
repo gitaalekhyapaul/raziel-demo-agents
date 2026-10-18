@@ -445,6 +445,7 @@
 	function renderTaskList() {
 		const tasks = list(state?.tasks).slice(0, LIMIT.tasks);
 		const keep = new Set();
+		let position = 0;
 		for (const entry of tasks) {
 			if (!entry || typeof entry.id !== "string") continue;
 			keep.add(entry.id);
@@ -459,8 +460,10 @@
 				button.addEventListener("click", () => selectTask(entry.id));
 				item = { button, title, meta, badge };
 				taskNodes.set(entry.id, item);
-				$("task-list").append(button);
 			}
+			const atPosition = $("task-list").children[position++] ?? null;
+			if (atPosition !== item.button)
+				$("task-list").insertBefore(item.button, atPosition);
 			item.title.textContent = scalar(entry.label || entry.id);
 			item.meta.textContent =
 				scalar(entry.datasetId) + " / r" + scalar(entry.datasetRevision);

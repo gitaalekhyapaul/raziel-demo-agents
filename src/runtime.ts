@@ -384,8 +384,18 @@ export class AgentRuntime {
 			const result = messages
 				.filter((row) => row.kind === "settlement_result")
 				.at(-1)?.payload;
+			const createdAt =
+				task.createdAt ?? Number(request?.createdAtUnixSeconds ?? 0n) * 1000;
+			const updatedAt = Math.max(
+				createdAt,
+				task.updatedAt ?? 0,
+				Number(request?.updatedAtUnixSeconds ?? 0n) * 1000,
+				...messages.map((message) => Date.parse(message.createdAt) || 0),
+			);
 			return {
 				id: task.id,
+				createdAt,
+				updatedAt,
 				label: task.label,
 				datasetId: task.datasetId,
 				datasetRevision: task.datasetRevision,
@@ -415,6 +425,9 @@ export class AgentRuntime {
 					: undefined,
 			};
 		});
+		tasks
+			.reverse()
+			.sort((a, b) => b.updatedAt - a.updatedAt || b.createdAt - a.createdAt);
 		const credentials = state.credentials;
 		return {
 			role: this.role,

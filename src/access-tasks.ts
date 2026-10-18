@@ -30,6 +30,8 @@ export interface QueryResult {
 }
 export interface Task {
 	id: string;
+	createdAt?: number;
+	updatedAt?: number;
 	label: string;
 	datasetId: string;
 	datasetRevision: number;
@@ -130,6 +132,7 @@ function utc(value: unknown) {
 }
 export function newTask(input: TaskInput): Task {
 	const id = input.channelTaskId ?? randomUUID();
+	const now = Date.now();
 	const intent = create(AccessIntentSchema, {
 		formatVersion: 1,
 		requestId: randomUUID(),
@@ -142,6 +145,8 @@ export function newTask(input: TaskInput): Task {
 	return {
 		...input,
 		id,
+		createdAt: now,
+		updatedAt: now,
 		intent: toJson(AccessIntentSchema, intent),
 		phase: "REQUESTING",
 		paused: false,
@@ -163,7 +168,11 @@ export class AccessTasks {
 		await this.store.update((state) => {
 			const task = state.tasks.find((row) => row.id === id);
 			if (!task) throw new AppError("TASK_NOT_FOUND", 404);
-			Object.assign(task, values);
+			const changed = Object.entries(values).some(
+				([key, value]) =>
+					JSON.stringify(task[key as keyof Task]) !== JSON.stringify(value),
+			);
+			if (changed) Object.assign(task, values, { updatedAt: Date.now() });
 		});
 	}
 	async remember(id: string, request: AccessRequest) {

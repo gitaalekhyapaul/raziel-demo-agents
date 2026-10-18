@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { create, fromJson, toJson } from "@bufbuild/protobuf";
 import {
@@ -53,6 +53,53 @@ async function withRuntime(
 		await rm(root, { recursive: true, force: true });
 	}
 }
+
+test("task activity persists and unchanged status refreshes keep its timestamp", async () => {
+	await withRuntime(async (runtime, _base, id) => {
+		const created = await runtime.access.get(id);
+		assert.ok(created.createdAt! > 0);
+		assert.equal(created.updatedAt, created.createdAt);
+		const request = create(AccessRequestSchema, {
+			requestId: "00000000-0000-4000-8000-000000000001",
+			state: AccessRequestState.PENDING_REVIEW,
+			createdAtUnixSeconds: 100n,
+			updatedAtUnixSeconds: 200n,
+		});
+		await runtime.access.store.update((state) => {
+			state.tasks = [
+				{
+					...created,
+					createdAt: undefined,
+					updatedAt: undefined,
+					request: toJson(AccessRequestSchema, request),
+				},
+				{ ...created, id: "newer", createdAt: 300000, updatedAt: 300000 },
+			];
+		});
+		assert.deepEqual(
+			(await runtime.view()).tasks.map((task) => task.id),
+			["newer", id],
+		);
+		await runtime.access.remember(id, request);
+		const updated = (await runtime.access.get(id)).updatedAt;
+		await runtime.access.remember(id, request);
+		assert.equal((await runtime.access.get(id)).updatedAt, updated);
+		assert.deepEqual(
+			(await runtime.view()).tasks.map((task) => task.id),
+			[id, "newer"],
+		);
+		const root = dirname(runtime.access.store.path);
+		const restarted = new AgentRuntime({
+			role: "A",
+			root,
+			signer: (await loadIdentity(root)).signer,
+		});
+		assert.deepEqual(
+			(await restarted.view()).tasks.map((task) => task.id),
+			[id, "newer"],
+		);
+	});
+});
 
 for (const pauseDuring of ["status", "signing"]) {
 	test(`pause during ${pauseDuring} prevents issuance submission and resume retains the attempt`, async () => {
